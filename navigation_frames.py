@@ -61,3 +61,50 @@ def navigate_reference_frames(network, matrix1, matrix2):
         network.link_frames(concept, series_of_sub_categories)
 
         return f"Series of sub-categories identified and added: {series_of_sub_categories}"
+    
+    
+import networkx as nx
+from llm_call import get_response
+
+
+def navigate_reference_frames_llm(G, matrix1_description, matrix2_description):
+    """
+    Use an LLM to hypothesize transformations based on descriptions of matrix states and navigate a graph.
+
+    Args:
+    G (nx.DiGraph): A directed graph representing transformations and categories.
+    matrix1_description (str): Description of the initial matrix state.
+    matrix2_description (str): Description of the transformed matrix state.
+
+    Returns:
+    str: Description of the most relevant transformation paths in the graph.
+    """
+    # Step 1: Query LLM to hypothesize transformations based on descriptions
+    prompt = f"Given the initial state described as '{matrix1_description}' and a transformed state described as '{matrix2_description}', what are the most likely transformations that could have occurred? Please list potential transformations."
+    transformations = get_llm_response(prompt)  # Placeholder for LLM call
+
+    # Step 2: Find matching nodes in the graph
+    relevant_nodes = [node for node in G.nodes if node in transformations]
+
+    # Step 3: Traverse from general observations to specific transformations
+    paths = []
+    for node in relevant_nodes:
+        for observation in general_observations:  # Defined globally or passed as an argument
+            if nx.has_path(G, observation, node):
+                path = nx.shortest_path(G, source=observation, target=node)
+                paths.append(path)
+
+    if not paths:
+        return "No relevant transformation paths found in the graph."
+
+    # Format the output to show relevant paths
+    formatted_paths = [" -> ".join(path) for path in paths]
+    return "Identified Paths:\n" + "\n".join(formatted_paths)
+
+
+# # Example usage
+# G = create_example_graph()  # Assume this function sets up your graph as described before
+# matrix1_desc = "a simple two-dimensional numeric matrix with low values"
+# matrix2_desc = "the same matrix but each element is doubled, suggesting a uniform scale transformation"
+result = navigate_reference_frames_llm(G, matrix1_desc, matrix2_desc)
+print(result)
